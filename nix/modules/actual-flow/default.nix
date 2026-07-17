@@ -122,7 +122,10 @@ in
       };
     };
   };
-  imports = [ inputs.setup-secrets.nixosModules.default ];
+  imports = [
+    inputs.setup-secrets.nixosModules.default
+    inputs.homelab.nixosModules.kubetree-service-macros
+  ];
   config = lib.mkIf (cfg.enable && cfg.importSchedule != null) {
     setup-secrets = {
       sources.LUNCHFLOW_API_KEY = {
@@ -184,6 +187,16 @@ in
           servicePodSpec = {
             name = "actual-flow";
             restartPolicy = "OnFailure";
+            securityContext =
+              let
+                secCtx = config.kubetree.service-macros.securityContext;
+              in
+              {
+                runAsUser = secCtx.runAsUser;
+                runAsGroup = secCtx.runAsGroup;
+                supplementalGroups = secCtx.supplementalGroups;
+                fsGroup = secCtx.runAsGroup;
+              };
             initContainersByName.setup-config = {
               image = "${container-utils.buildArgs.name}:${container-utils.imageTag}";
               imagePullPolicy = "Never";
@@ -192,7 +205,7 @@ in
                   jq --arg key "$LUNCHFLOW_API_KEY" '.lunchFlow.apiKey = $key' /config/config.json >/config-tmp/config.json
                 ''
               ];
-              securityContext = config.kubetree.service-macros.securityContext // {
+              securityContext = {
                 allowPrivilegeEscalation = false;
                 readOnlyRootFilesystem = true;
                 capabilities.drop = [ "ALL" ];
