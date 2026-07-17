@@ -115,9 +115,11 @@ in
         create-ghostfolio-api-token = {
           apiVersion = "batch/v1";
           kind = "Job";
-          namespace = "homepage";
-          name = "create-ghostfolio-api-token";
-          labels."app.kubernetes.io/name" = "homepage";
+          metadata = {
+            namespace = "homepage";
+            name = "create-ghostfolio-api-token";
+            labels."app.kubernetes.io/name" = "homepage";
+          };
           spec = jobSpec;
         };
         refresh-ghostfolio-api-token = {
